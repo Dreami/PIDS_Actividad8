@@ -19,42 +19,53 @@ namespace Actividad8
             string output_path8 = @"C:\Users\maple\Documents\9° Semester\CS13309_Archivos_HTML\a8_matricula.txt";
             string output;
 
+            string output_pathProcessTime = @"C:\Users\maple\Documents\9° Semester\CS13309_Archivos_HTML\posting_processing_time.txt";
+            string output_pathTokenTime = @"C:\Users\maple\Documents\9° Semester\CS13309_Archivos_HTML\token_time.txt";
+            long[] fileProcessTime = new long[Files.Count()], tokenTime = new long[Files.Count()];
+
             var watch = System.Diagnostics.Stopwatch.StartNew();
+
             List<string> sortedWords = new List<string>();
 
             int count = 0;
             Hashtable postings = new Hashtable();
-            
+
             foreach (FileInfo file in Files)
             {
-
                 output = "";
                 var watchEach = System.Diagnostics.Stopwatch.StartNew();
                 string htmlContent = File.ReadAllText(file.FullName);
                 htmlContent.Trim();
+                htmlContent.ToLower();
 
                 string[] eachWord = htmlContent.Split(' ');
                 try
                 {
-                    foreach (string word in eachWord)
+                    foreach (string w in eachWord)
                     {
-                        if (!string.IsNullOrEmpty(word))
+                        if (!string.IsNullOrEmpty(w))
                         {
-                            if (!word.Equals(" "))
+                            if (!w.Equals(" "))
                             {
+                                string word = w.ToLower();
                                 word.Replace(",", "")
-                                    .Replace(".", "");
-                            }
+                                    .Replace(".", "")
+                                    .Replace("\r", "")
+                                    .Replace("\t", "")
+                                    .Replace("\n", "")
+                                    .Replace("(", "")
+                                    .Replace(")", "");
 
-                            if (postings.ContainsKey(word))
-                            {
-                                Posting existingWord = (Posting) postings[word];
-                                existingWord.addWord(word);
-                                postings[word] = existingWord;
-                            }
-                            else
-                            {
-                                postings.Add(word, new Posting(word, file.Name, count));
+                                if (postings.ContainsKey(word))
+                                {
+                                    Posting existingWord = (Posting)postings[word];
+                                    existingWord.addWord(word);
+                                    postings[word] = existingWord;
+                                }
+                                else
+                                {
+                                    postings.Add(word, new Posting(word, file.Name, count));
+                                }
                             }
                         }
                     }
@@ -68,22 +79,30 @@ namespace Actividad8
                     Console.WriteLine(keyNotFoundExc.StackTrace);
                 }
 
+                tokenTime[count] = watchEach.ElapsedMilliseconds;
+                output = tokenTime[count] + ", ";
+                Outputs.output_print(output_pathTokenTime, output);
+
                 List<String> tokenList = postings.Keys.Cast<String>().ToList();
 
                 foreach (String token in tokenList)
                 {
                     if (Array.IndexOf(eachWord, token) >= 0)
                     {
-                        Posting foundWord = (Posting) postings[token];
-                        output += "\n" + foundWord.printScore() + "\n";
+                        Posting foundWord = (Posting)postings[token];
+                        output = "\n" + foundWord.printScore() + "\n";
+                        Outputs.output_print(output_path8, output);
+                        Console.WriteLine(output);
                     }
                     else
                     {
                         postings.Remove(token);
                     }
                 }
-
-                output += "\n" + file.Name + " finished in " + watchEach.Elapsed.TotalMilliseconds.ToString() + " ms";
+                fileProcessTime[count] = watchEach.ElapsedMilliseconds;
+                output = fileProcessTime[count] + ", ";
+                Outputs.output_print(output_pathProcessTime, output);
+                output = "\n" + file.Name + " finished in " + watchEach.Elapsed.TotalMilliseconds.ToString() + " ms";
                 Console.WriteLine(output);
                 watchEach.Stop();
                 Outputs.output_print(output_path8, output);
